@@ -75,7 +75,9 @@ void resourcesWorker::updateCpu()
 {
     std::vector<cpuStruct> cpuTimes = getCpuTimes();
     if (prevCpuTimes.size() != 0) {
+        //time differ to calculate  1s is big time and make cpu small
         std::vector<double> cpuPercentages = calculateCpuPercentages(cpuTimes, prevCpuTimes);
+        //std::vector<double> cpuPercentages = getCpuPercentages();
 
         /*for(unsigned int i=0; i<cpuPercentages.size(); i++) {
             std::cout << cpuPercentages.at(i) << std::endl;
@@ -281,9 +283,11 @@ void resourcesWorker::loop()
 {
     clock_t begin = clock();
 
-    if (settings->value("resources update interval",1.0).toDouble() < 0.25) {
-        settings->setValue("resources update interval",0.25);
-    }
+    //    if (settings->value("resources update interval",1.0).toDouble() < 0.25) {
+    //        settings->setValue("resources update interval",0.25);
+    //    }
+    settings->setValue("resources update interval",1);
+
 
     meminfo(); // have procps read the memory
     //std::cout << kb_main_used << "/" << kb_main_total << std::endl;

@@ -24,6 +24,7 @@ typedef struct cpuStruct {
 } cpuStruct;
 std::vector<cpuStruct> getCpuTimes();
 std::vector<double> calculateCpuPercentages(std::vector<cpuStruct> now, std::vector<cpuStruct> prev);
+std::vector<double> getCpuPercentages();
 }
 
 #endif // CPUTOOLS_H

@@ -60,7 +60,7 @@ RCMonitor::RCMonitor(QWidget *parent) :
 RCMonitor::~RCMonitor()
 {
     delete ui;
-//    delete processesThread;
+    //    delete processesThread;
     delete resourcesThread;
     delete filesystemThread;
     delete mainTabs;
@@ -144,7 +144,7 @@ void RCMonitor::updateCpuPlotSLO(const qcustomplotCpuVector &input)
     QVector<double> x(60); // initialize with entries 60..0
     for (int i=59; i>0; --i)
     {
-        x[i] = i;
+        x[i] = 59-i;
     }
 
     const qcustomplotCpuVector *values = &input;
@@ -180,7 +180,7 @@ void RCMonitor::updateCpuPlotSLO(const qcustomplotCpuVector &input)
         QColor cpuColour = createColourFromSettings(settings, colName, this->defaultCpuColours[colName].array);
 
         if (!previouslyPlotted) {
-            cpuPlot->addGraph();
+            cpuPlot->addGraph(cpuPlot->xAxis,cpuPlot->yAxis2);
         } else {
             cpuPlot->graph(i)->data()->clear();
             cpuPlot->graph(i)->setPen(QPen(QColor(cpuColour)));
@@ -201,7 +201,25 @@ void RCMonitor::updateCpuPlotSLO(const qcustomplotCpuVector &input)
     } else {
         cpuPlot->xAxis->setRange(0, values->at(0).size());
     }
-    cpuPlot->yAxis->setRange(0, 100);
+
+    cpuPlot->xAxis->setTicks(true);
+    cpuPlot->yAxis->setTicks(false);
+    cpuPlot->xAxis2->setTicks(false);
+    cpuPlot->yAxis2->setTicks(true);
+
+    cpuPlot->xAxis->setVisible(true);
+    cpuPlot->yAxis->setVisible(true);
+    cpuPlot->xAxis2->setVisible(true);
+    cpuPlot->yAxis2->setVisible(true);
+
+    cpuPlot->xAxis->setTickLabels(true);
+    cpuPlot->yAxis->setTickLabels(false);
+    cpuPlot->xAxis2->setTickLabels(false);
+    cpuPlot->yAxis2->setTickLabels(true);
+
+    cpuPlot->xAxis->setRangeReversed(true);
+    cpuPlot->yAxis2->setRange(0, 100);
+    cpuPlot->yAxis2->setLabel("Percent%");
     cpuPlot->replot();
 }
 
@@ -251,7 +269,7 @@ void RCMonitor::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
     QVector<double> x(60); // initialize with entries 60..0
     for (int i=59; i>0; --i)
     {
-        x[i] = i;
+        x[i] = 59 - i;
     }
 
     QVector<QVector<double>> splineXValues;
@@ -271,19 +289,36 @@ void RCMonitor::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
         "networkSendingColourButton"
     };
     for(unsigned int i=0; i<2; i++) {
-        networkPlot->addGraph();
+        networkPlot->addGraph(networkPlot->xAxis, networkPlot->yAxis2);
         networkPlot->graph(i)->setPen(QPen(colourHelper::createColourFromSettings(settings, colours[i],
                                                                                   resourcesThread->getColourDefaults()[colours[i]].array)));
         networkPlot->graph(i)->setData(x, plotting->at(i));
     }
+
+    networkPlot->xAxis->setTicks(true);
+    networkPlot->yAxis->setTicks(false);
+    networkPlot->xAxis2->setTicks(false);
+    networkPlot->yAxis2->setTicks(true);
+
+    networkPlot->xAxis->setVisible(true);
+    networkPlot->yAxis->setVisible(true);
+    networkPlot->xAxis2->setVisible(true);
+    networkPlot->yAxis2->setVisible(true);
+
+    networkPlot->xAxis->setTickLabels(true);
+    networkPlot->yAxis->setTickLabels(false);
+    networkPlot->xAxis2->setTickLabels(false);
+    networkPlot->yAxis2->setTickLabels(true);
+
+    networkPlot->xAxis->setRangeReversed(true);
 
     if (smooth) {
         networkPlot->xAxis->setRange(0, x.last() + 1);
     } else {
         networkPlot->xAxis->setRange(0, plotting->at(0).size());
     }
-    networkPlot->yAxis->setRange(0, scaler.getValue() + 1);
-    networkPlot->yAxis->setLabel(QString::fromStdString(scaler.getUnitAsString()));
+    networkPlot->yAxis2->setRange(0, scaler.getValue() + 1);
+    networkPlot->yAxis2->setLabel(QString::fromStdString(scaler.getUnitAsString()));
     networkPlot->replot();
 }
 

@@ -197,7 +197,7 @@ void fileSystemWorker::fillDiskStructures(std::vector<disk> &disks)
 void fileSystemWorker::updateTable()
 {
     timeSinceLastIOCheck = std::chrono::duration_cast<std::chrono::milliseconds>(
-                       std::chrono::system_clock::now().time_since_epoch() - lastEpochCount).count();
+                std::chrono::system_clock::now().time_since_epoch() - lastEpochCount).count();
     lastEpochCount = std::chrono::system_clock::now().time_since_epoch();
 
     std::vector<disk> disks = readMtabDisks();
@@ -227,7 +227,7 @@ void fileSystemWorker::updateTable()
             diskTable->setItem(index,3,new TableMemoryItem((*p->totalSize)));
             diskTable->setItem(index,4,new TableMemoryItem((*p->freeSize)));
             diskTable->setItem(index,5,new TableNumberItem(QString::number(p->usedPercentage) + QString::fromStdString("% (" +
-                                                            p->usedSize->to_string() + ")")));
+                                                                                                                       p->usedSize->to_string() + ")")));
             diskTable->setItem(index,6,new TableNumberItem(QString::number(p->io) + "%"));
             diskTable->showRow(index);
         }
