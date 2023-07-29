@@ -1,3 +1,27 @@
+//#ifndef RCMONITOR_H
+//#define RCMONITOR_H
+
+//#include <QWidget>
+
+//namespace Ui {
+//class RCMonitor;
+//}
+
+//class RCMonitor : public QWidget
+//{
+//    Q_OBJECT
+
+//public:
+//    explicit RCMonitor(QWidget *parent = nullptr);
+//    ~RCMonitor();
+
+//private:
+//    Ui::RCMonitor *ui;
+//};
+
+//#endif // RCMONITOR_H
+
+
 /*
  * Copyright (C) 2017 Lily Rivers (VioletDarkKitty)
  *
@@ -15,11 +39,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef RCMONITOR_H
+#define RCMONITOR_H
 
-#include <QMainWindow>
-//#include "processinformationworker.h"
+#include <QWidget>
 #include "resourcesworker.h"
 #include "filesystemworker.h"
 #include <QAction>
@@ -27,18 +50,19 @@
 #include <QSettings>
 #include <utility>
 
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class RCMonitor;
 }
 
-class MainWindow : public QMainWindow
+class RCMonitor : public QWidget
 {
     Q_OBJECT
 
 public:
-    Ui::MainWindow *ui;
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+    Ui::RCMonitor *ui;
+    explicit RCMonitor(QWidget *parent = 0);
+    ~RCMonitor();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -51,10 +75,9 @@ private slots:
     void handleTabChange();
 
 private:
-    resourcesWorker* resourcesThread;
-    fileSystemWorker* filesystemThread;
-    QTabWidget* mainTabs;
-    QAction *quitAction, *aboutAction, *preferencesAction;
+    resourcesWorker *resourcesThread;
+    fileSystemWorker *filesystemThread;
+    QTabWidget *mainTabs;
     QCustomPlot *cpuPlot, *networkPlot;
     QSettings *settings;
     QGridLayout *cpuInfoArea;
@@ -63,4 +86,4 @@ private:
     QPair<QVector<QVector<double>>, qcustomplotCpuVector> generateSpline(QString name, QVector<double> &x, const QVector<QVector<double>> &y, bool setMax = false);
 };
 
-#endif // MAINWINDOW_H
+#endif // RCMONITOR_H

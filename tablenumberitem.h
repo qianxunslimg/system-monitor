@@ -17,7 +17,7 @@
  */
 #ifndef TABLENUMBERITEM_H
 #define TABLENUMBERITEM_H
-
+#include <QTableWidgetItem>
 // from http://stackoverflow.com/questions/7848683/how-to-sort-datas-in-qtablewidget
 
 class TableNumberItem : public QTableWidgetItem

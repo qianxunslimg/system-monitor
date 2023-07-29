@@ -33,16 +33,16 @@ DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR"\
 VERSION = $${VERSION_MAJOR}.$${VERSION_MINOR}.$${VERSION_BUILD}
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     workerthread.cpp \
     resourcesworker.cpp \
     filesystemworker.cpp \
     qcustomplot.cpp \
     cputools.cpp \
     memoryconverter.cpp \
-    colourhelper.cpp
+    colourhelper.cpp \
+    rcmonitor.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     tablenumberitem.h \
     workerthread.h \
     resourcesworker.h \
@@ -52,9 +52,11 @@ HEADERS  += mainwindow.h \
     cputools.h \
     hashqstring.h \
     memoryconverter.h \
-    colourhelper.h
+    colourhelper.h \
+    rcmonitor.h
 
-FORMS    += mainwindow.ui
+FORMS    += \
+    rcmonitor.ui
 
 QMAKE_CXXFLAGS += -std=c++14 -Wall
 LIBS += -L"libprocps6" -lprocps -lstdc++fs

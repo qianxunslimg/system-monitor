@@ -15,41 +15,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "rcmonitor.h"
+#include "ui_rcmonitor.h"
 #include <iostream>
 #include "colourhelper.h"
 using namespace colourHelper;
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+RCMonitor::RCMonitor(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::RCMonitor)
 {
     ui->setupUi(this);
 
     settings = new QSettings("system-monitor","system-monitor");
 
-    QDataStream geometry(settings->value("mainWindowGeometry", this->geometry()).toByteArray());
+    QDataStream geometry(settings->value("RCMonitorGeometry", this->geometry()).toByteArray());
     QRect geomRect;
     geometry >> geomRect;
     this->setGeometry(geomRect);
 
-//    processesThread = new processInformationWorker(this, settings);
     resourcesThread = new resourcesWorker(this, settings);
     filesystemThread = new fileSystemWorker(this, settings);
 
-//    processesThread->start();
     resourcesThread->start();
     filesystemThread->start();
-
-    //    quitAction = this->findChild<QAction*>("actionQuit");
-    //    connect(quitAction,SIGNAL(triggered(bool)),QApplication::instance(),SLOT(quit()));
-
-    //    aboutAction = this->findChild<QAction*>("actionAbout");
-    //    connect(aboutAction,SIGNAL(triggered(bool)),this,SLOT(showAboutWindow()));
-
-    //    preferencesAction = this->findChild<QAction*>("actionPreferences");
-    //    connect(preferencesAction,SIGNAL(triggered(bool)),this,SLOT(showPreferencesWindow()));
 
     mainTabs = findChild<QTabWidget*>("tabWidgetMain");
     connect(mainTabs, SIGNAL(currentChanged(int)), this, SLOT(handleTabChange()));
@@ -68,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent) :
     handleTabChange();
 }
 
-MainWindow::~MainWindow()
+RCMonitor::~RCMonitor()
 {
     delete ui;
 //    delete processesThread;
@@ -78,17 +67,17 @@ MainWindow::~MainWindow()
     delete settings;
 }
 
-void MainWindow::resizeEvent(QResizeEvent* event)
+void RCMonitor::resizeEvent(QResizeEvent* event)
 {
-    QMainWindow::resizeEvent(event);
+    QWidget::resizeEvent(event);
 
     QByteArray data;
     QDataStream geometry(&data, QIODevice::WriteOnly);
     geometry << this->geometry();
-    settings->setValue("mainWindowGeometry", data);
+    settings->setValue("RCMonitorGeometry", data);
 }
 
-void MainWindow::updateCpuAreaInfo(const QVector<double> &input)
+void RCMonitor::updateCpuAreaInfo(const QVector<double> &input)
 {
     static QVector<QLabel*> cpuLabels;
     static QVector<QPushButton*> cpuColourButtons;
@@ -139,7 +128,7 @@ void MainWindow::updateCpuAreaInfo(const QVector<double> &input)
     }
 }
 
-QPair<QVector<QVector<double>>, qcustomplotCpuVector> MainWindow::generateSpline(QString name, QVector<double> &x, const qcustomplotCpuVector &y, bool setMax)
+QPair<QVector<QVector<double>>, qcustomplotCpuVector> RCMonitor::generateSpline(QString name, QVector<double> &x, const qcustomplotCpuVector &y, bool setMax)
 {
     /// TODO stub
     int size = y.size();
@@ -150,7 +139,7 @@ QPair<QVector<QVector<double>>, qcustomplotCpuVector> MainWindow::generateSpline
     return QPair<QVector<QVector<double>>, qcustomplotCpuVector>(xs, y);
 }
 
-void MainWindow::updateCpuPlotSLO(const qcustomplotCpuVector &input)
+void RCMonitor::updateCpuPlotSLO(const qcustomplotCpuVector &input)
 {
     QVector<double> x(60); // initialize with entries 60..0
     for (int i=59; i>0; --i)
@@ -216,7 +205,7 @@ void MainWindow::updateCpuPlotSLO(const qcustomplotCpuVector &input)
     cpuPlot->replot();
 }
 
-void MainWindow::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
+void RCMonitor::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
 {
     const memoryConverter *sendingMax = nullptr, *recievingMax = nullptr;
 
@@ -299,9 +288,9 @@ void MainWindow::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
 }
 
 /**
- * @brief MainWindow::handleTabChange Handle when the tab is changed, pause the other threads
+ * @brief RCMonitor::handleTabChange Handle when the tab is changed, pause the other threads
  */
-void MainWindow::handleTabChange()
+void RCMonitor::handleTabChange()
 {
     unsigned int index = mainTabs->currentIndex();
     resourcesThread->setPaused(false);
