@@ -19,7 +19,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "processinformationworker.h"
+//#include "processinformationworker.h"
 #include "resourcesworker.h"
 #include "filesystemworker.h"
 #include <QAction>
@@ -49,11 +49,8 @@ public slots:
 
 private slots:
     void handleTabChange();
-    void showAboutWindow();
-    void showPreferencesWindow();
 
 private:
-    processInformationWorker* processesThread;
     resourcesWorker* resourcesThread;
     fileSystemWorker* filesystemThread;
     QTabWidget* mainTabs;

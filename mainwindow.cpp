@@ -17,8 +17,6 @@
  */
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "aboutdialogue.h"
-#include "preferencesdialogue.h"
 #include <iostream>
 #include "colourhelper.h"
 using namespace colourHelper;
@@ -36,22 +34,22 @@ MainWindow::MainWindow(QWidget *parent) :
     geometry >> geomRect;
     this->setGeometry(geomRect);
 
-    processesThread = new processInformationWorker(this, settings);
+//    processesThread = new processInformationWorker(this, settings);
     resourcesThread = new resourcesWorker(this, settings);
     filesystemThread = new fileSystemWorker(this, settings);
 
-    processesThread->start();
+//    processesThread->start();
     resourcesThread->start();
     filesystemThread->start();
 
-    quitAction = this->findChild<QAction*>("actionQuit");
-    connect(quitAction,SIGNAL(triggered(bool)),QApplication::instance(),SLOT(quit()));
+    //    quitAction = this->findChild<QAction*>("actionQuit");
+    //    connect(quitAction,SIGNAL(triggered(bool)),QApplication::instance(),SLOT(quit()));
 
-    aboutAction = this->findChild<QAction*>("actionAbout");
-    connect(aboutAction,SIGNAL(triggered(bool)),this,SLOT(showAboutWindow()));
+    //    aboutAction = this->findChild<QAction*>("actionAbout");
+    //    connect(aboutAction,SIGNAL(triggered(bool)),this,SLOT(showAboutWindow()));
 
-    preferencesAction = this->findChild<QAction*>("actionPreferences");
-    connect(preferencesAction,SIGNAL(triggered(bool)),this,SLOT(showPreferencesWindow()));
+    //    preferencesAction = this->findChild<QAction*>("actionPreferences");
+    //    connect(preferencesAction,SIGNAL(triggered(bool)),this,SLOT(showPreferencesWindow()));
 
     mainTabs = findChild<QTabWidget*>("tabWidgetMain");
     connect(mainTabs, SIGNAL(currentChanged(int)), this, SLOT(handleTabChange()));
@@ -73,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete processesThread;
+//    delete processesThread;
     delete resourcesThread;
     delete filesystemThread;
     delete mainTabs;
@@ -82,19 +80,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent* event)
 {
-   QMainWindow::resizeEvent(event);
+    QMainWindow::resizeEvent(event);
 
-   QByteArray data;
-   QDataStream geometry(&data, QIODevice::WriteOnly);
-   geometry << this->geometry();
-   settings->setValue("mainWindowGeometry", data);
+    QByteArray data;
+    QDataStream geometry(&data, QIODevice::WriteOnly);
+    geometry << this->geometry();
+    settings->setValue("mainWindowGeometry", data);
 }
 
 void MainWindow::updateCpuAreaInfo(const QVector<double> &input)
 {
     static QVector<QLabel*> cpuLabels;
     static QVector<QPushButton*> cpuColourButtons;
-    #define colourNamesLen 4
+#define colourNamesLen 4
     static const QString colourNames[] = {
         "orange","red","green","blue"
     };
@@ -132,11 +130,11 @@ void MainWindow::updateCpuAreaInfo(const QVector<double> &input)
 
     for(int i=0; i<cpuLabels.size(); i++) {
         cpuLabels[i]->setText("CPU" + QString::number(i+1) + " "
-                                + QString::number(memoryConverter::roundDouble(input[i], 1)) + "%");
+                              + QString::number(memoryConverter::roundDouble(input[i], 1)) + "%");
 
         QPixmap cpuColour = QPixmap(cpuColourButtons[i]->width(), cpuColourButtons[i]->height());
         cpuColour.fill(createColourFromSettings(settings, cpuColourButtons[i]->objectName(),
-                                                      this->defaultCpuColours[cpuColourButtons[i]->objectName()].array));
+                                                this->defaultCpuColours[cpuColourButtons[i]->objectName()].array));
         cpuColourButtons[i]->setIcon(QIcon(cpuColour));
     }
 }
@@ -157,7 +155,7 @@ void MainWindow::updateCpuPlotSLO(const qcustomplotCpuVector &input)
     QVector<double> x(60); // initialize with entries 60..0
     for (int i=59; i>0; --i)
     {
-      x[i] = i;
+        x[i] = i;
     }
 
     const qcustomplotCpuVector *values = &input;
@@ -226,13 +224,13 @@ void MainWindow::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
     for(unsigned int i=0; i<2; i++) {
         for(int j=0; j<values.at(i).size(); j++) {
             switch(i) {
-                case 0:
+            case 0:
                 if (recievingMax == nullptr || (*recievingMax) < values.at(i).at(j)) {
                     recievingMax = &(values.at(i).at(j));
                 }
                 break;
 
-                case 1:
+            case 1:
                 if (sendingMax == nullptr || (*sendingMax) < values.at(i).at(j)) {
                     sendingMax = &(values.at(i).at(j));
                 }
@@ -264,7 +262,7 @@ void MainWindow::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
     QVector<double> x(60); // initialize with entries 60..0
     for (int i=59; i>0; --i)
     {
-      x[i] = i;
+        x[i] = i;
     }
 
     QVector<QVector<double>> splineXValues;
@@ -306,43 +304,6 @@ void MainWindow::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
 void MainWindow::handleTabChange()
 {
     unsigned int index = mainTabs->currentIndex();
-    processesThread->setPaused(true);
-    if (!settings->value("resourcesKeepThreadRunning", true).toBool()) {
-        resourcesThread->setPaused(true);
-    } else {
-        resourcesThread->setPaused(false);
-    }
-    filesystemThread->setPaused(true);
-    switch(index) {
-        case 0:
-            processesThread->setPaused(false);
-        break;
-
-        case 1:
-            resourcesThread->setPaused(false);
-        break;
-
-        case 2:
-            filesystemThread->setPaused(false);
-        break;
-    }
-}
-
-/**
- * @brief MainWindow::showAboutWindow Show the about dialogue without blocking the main thread
- */
-void MainWindow::showAboutWindow()
-{
-    AboutDialogue* about = new AboutDialogue(this);
-    //about->show();
-    about->exec();
-}
-
-/**
- * @brief MainWindow::showPreferencesWindow Show the preferences dialogue
- */
-void MainWindow::showPreferencesWindow()
-{
-    PreferencesDialogue* pref = new PreferencesDialogue(this, settings);
-    pref->exec();
+    resourcesThread->setPaused(false);
+    filesystemThread->setPaused(false);
 }

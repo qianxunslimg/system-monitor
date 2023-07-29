@@ -34,40 +34,27 @@ VERSION = $${VERSION_MAJOR}.$${VERSION_MINOR}.$${VERSION_BUILD}
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    processinformationworker.cpp \
     workerthread.cpp \
     resourcesworker.cpp \
     filesystemworker.cpp \
-    processpropertiesdialogue.cpp \
-    processtools.cpp \
-    aboutdialogue.cpp \
     qcustomplot.cpp \
     cputools.cpp \
-    preferencesdialogue.cpp \
     memoryconverter.cpp \
     colourhelper.cpp
 
 HEADERS  += mainwindow.h \
-    processinformationworker.h \
     tablenumberitem.h \
     workerthread.h \
     resourcesworker.h \
     tablememoryitem.h \
     filesystemworker.h \
-    processpropertiesdialogue.h \
-    processtools.h \
-    aboutdialogue.h \
     qcustomplot.h \
     cputools.h \
-    preferencesdialogue.h \
     hashqstring.h \
     memoryconverter.h \
     colourhelper.h
 
-FORMS    += mainwindow.ui \
-    processpropertiesdialogue.ui \
-    aboutdialogue.ui \
-    preferencesdialogue.ui
+FORMS    += mainwindow.ui
 
 QMAKE_CXXFLAGS += -std=c++14 -Wall
 LIBS += -L"libprocps6" -lprocps -lstdc++fs
