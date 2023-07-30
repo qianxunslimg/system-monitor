@@ -1,27 +1,3 @@
-//#ifndef RCMONITOR_H
-//#define RCMONITOR_H
-
-//#include <QWidget>
-
-//namespace Ui {
-//class RCMonitor;
-//}
-
-//class RCMonitor : public QWidget
-//{
-//    Q_OBJECT
-
-//public:
-//    explicit RCMonitor(QWidget *parent = nullptr);
-//    ~RCMonitor();
-
-//private:
-//    Ui::RCMonitor *ui;
-//};
-
-//#endif // RCMONITOR_H
-
-
 /*
  * Copyright (C) 2017 Lily Rivers (VioletDarkKitty)
  *
@@ -52,7 +28,7 @@
 
 namespace Ui
 {
-    class RCMonitor;
+class RCMonitor;
 }
 
 class RCMonitor : public QWidget
@@ -71,14 +47,18 @@ public slots:
     void updateCpuPlotSLO(const qcustomplotCpuVector &input);
     void updateNetworkPlotSLO(const qcustomplotNetworkVector &values);
 
+    void updateMemoryPlotSLO(const qcustomplotCpuVector &input);
+
+
 private slots:
     void handleTabChange();
 
 private:
+    QVector<double> x;
     resourcesWorker *resourcesThread;
     fileSystemWorker *filesystemThread;
     QTabWidget *mainTabs;
-    QCustomPlot *cpuPlot, *networkPlot;
+    QCustomPlot *cpuPlot, *networkPlot, *memoryPlot;
     QSettings *settings;
     QGridLayout *cpuInfoArea;
     void updateCpuAreaInfo(const QVector<double> &input);

@@ -54,6 +54,9 @@ signals:
     void updateSwapBar(int value);
     void updateSwapText(QString value);
     void updateCpuPlotSIG(const qcustomplotCpuVector &values);
+
+    void updateMemoryPlotSIG(const qcustomplotCpuVector &values);
+
     void updateNetworkRecieving(QString value);
     void updateNetworkRecievingTotal(QString value);
     void updateNetworkSending(QString value);
@@ -64,15 +67,15 @@ private:
     QProgressBar *memoryBar, *swapBar;
     QLabel *memoryLabel, *swapLabel;
     void updateMemory();
-    void updateSwap();
     void updateCpu();
     std::vector<cpuTools::cpuStruct> prevCpuTimes;
     std::deque<std::vector<double>> cpuPlotData;
+    std::deque<std::vector<double>> memoryPlotData;
     QSettings *settings;
     unitStandard standard;
     QLabel *networkRecievingLabel, *networkRecievingTotalLabel, *networkSendingLabel, *networkSendingTotalLabel;
     void updateNetwork();
-    QPushButton *networkRecievingColourButton, *networkSendingColourButton;
+    QPushButton *networkRecievingColourButton, *networkSendingColourButton, *memoryColourButton ,*swapColourButton;
     QHash<QString, struct__intArrayHolder> defaultColours;
 public slots:
     void createColourDialogue();

@@ -49,10 +49,22 @@ RCMonitor::RCMonitor(QWidget *parent) :
             this,SLOT(updateCpuPlotSLO(const qcustomplotCpuVector&)));
     cpuInfoArea = ui->tabResources->findChild<QGridLayout*>("cpuInfoArea");
 
+    memoryPlot = reinterpret_cast<QCustomPlot*>(ui->tabResources->findChild<QWidget*>("memoryPlot"));
+    connect(resourcesThread,SIGNAL(updateMemoryPlotSIG(const qcustomplotCpuVector&)),
+            this,SLOT(updateMemoryPlotSLO(const qcustomplotCpuVector&)));
+    cpuInfoArea = ui->tabResources->findChild<QGridLayout*>("cpuInfoArea");
+
+
     qRegisterMetaType<qcustomplotNetworkVector>("qcustomplotNetworkVector");
     networkPlot = reinterpret_cast<QCustomPlot*>(ui->tabResources->findChild<QWidget*>("networkPlot"));
     connect(resourcesThread,SIGNAL(updateNetworkPlotSIG(const qcustomplotNetworkVector&)),
             this,SLOT(updateNetworkPlotSLO(qcustomplotNetworkVector)));
+
+    x.resize(60);
+    for (int i=59; i>=0; --i)
+    {
+        x[i] =59-i;
+    }
 
     handleTabChange();
 }
@@ -141,12 +153,6 @@ QPair<QVector<QVector<double>>, qcustomplotCpuVector> RCMonitor::generateSpline(
 
 void RCMonitor::updateCpuPlotSLO(const qcustomplotCpuVector &input)
 {
-    QVector<double> x(60); // initialize with entries 60..0
-    for (int i=59; i>0; --i)
-    {
-        x[i] = 59-i;
-    }
-
     const qcustomplotCpuVector *values = &input;
 
     static bool previouslyPlotted = false;
@@ -223,6 +229,90 @@ void RCMonitor::updateCpuPlotSLO(const qcustomplotCpuVector &input)
     cpuPlot->replot();
 }
 
+void RCMonitor::updateMemoryPlotSLO(const qcustomplotCpuVector &input){
+    const qcustomplotCpuVector *values = &input;
+
+    static bool previouslyMemoryPlotted = false;
+    int size = values->count();//values->size();
+    if (size == 0) {
+        return;
+    }
+
+    //    QVector<QVector<double>> splineXValues;
+    //    bool smooth = settings->value("smoothGraphs", false).toBool();
+    //    QPair<QVector<QVector<double>>, qcustomplotCpuVector> data;
+    //    if(smooth) {
+    //        data = generateSpline("cpu", x, *values, true);
+    //        if (!data.second.empty() && !data.second.at(0).empty()) {
+    //            values = &data.second;
+    //            x = data.first.at(0);
+    //        }
+    //        splineXValues = data.first;
+    //    }
+
+    //    QVector<double> lastValues;
+    //    for(int i=0; i<size; i++) {
+    //        // do not show the interpolated values as the actual cpu%
+    //        lastValues.append(input.at(i).last());
+    //    }
+    //    updateCpuAreaInfo(lastValues);
+
+    QString colours[] = {
+        "memoryColourButton",
+        "swapColourButton"
+    };
+    //    for(unsigned int i=0; i<2; i++) {
+    //        networkPlot->addGraph(networkPlot->xAxis, networkPlot->yAxis2);
+    //        networkPlot->graph(i)->setPen(QPen(colourHelper::createColourFromSettings(settings, colours[i],
+    //                                                                                  resourcesThread->getColourDefaults()[colours[i]].array)));
+    //        networkPlot->graph(i)->setData(x, plotting->at(i));
+    //    }
+
+    for(int i=0; i<size; i++) {
+        QString colName = "Memory" + QString::number(i+1);
+        if (!previouslyMemoryPlotted) {
+            memoryPlot->addGraph(memoryPlot->xAxis,memoryPlot->yAxis2);
+        } else {
+            memoryPlot->graph(i)->data()->clear();
+            memoryPlot->graph(i)->setPen(QPen(colourHelper::createColourFromSettings(settings, colours[i],
+                                                                                      resourcesThread->getColourDefaults()[colours[i]].array)));
+        }
+
+        memoryPlot->graph(i)->setData(x, values->at(i));
+
+//        if (settings->value("draw cpu area stacked",false).toBool()) {
+//            memoryPlot->graph(i)->setBrush(QBrush(memoryColour));
+//        } else {
+//            memoryPlot->graph(i)->setBrush(QBrush());
+//        }
+    }
+    previouslyMemoryPlotted = true;
+
+    memoryPlot->xAxis->setRange(0, values->at(0).size());
+
+
+    memoryPlot->xAxis->setTicks(true);
+    memoryPlot->yAxis->setTicks(false);
+    memoryPlot->xAxis2->setTicks(false);
+    memoryPlot->yAxis2->setTicks(true);
+
+    memoryPlot->xAxis->setVisible(true);
+    memoryPlot->yAxis->setVisible(true);
+    memoryPlot->xAxis2->setVisible(true);
+    memoryPlot->yAxis2->setVisible(true);
+
+    memoryPlot->xAxis->setTickLabels(true);
+    memoryPlot->yAxis->setTickLabels(false);
+    memoryPlot->xAxis2->setTickLabels(false);
+    memoryPlot->yAxis2->setTickLabels(true);
+
+    memoryPlot->xAxis->setRangeReversed(true);
+    memoryPlot->yAxis2->setRange(0, 100);
+    memoryPlot->yAxis2->setLabel("Percent%");
+    memoryPlot->replot();
+}
+
+
 void RCMonitor::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
 {
     const memoryConverter *sendingMax = nullptr, *recievingMax = nullptr;
@@ -266,11 +356,11 @@ void RCMonitor::updateNetworkPlotSLO(const qcustomplotNetworkVector &values)
         scaled.push_back(scaledValuesTemp);
     }
 
-    QVector<double> x(60); // initialize with entries 60..0
-    for (int i=59; i>0; --i)
-    {
-        x[i] = 59 - i;
-    }
+    //    QVector<double> x(60); // initialize with entries 60..0
+    //    for (int i=59; i>0; --i)
+    //    {
+    //        x[i] = 59 - i;
+    //    }
 
     QVector<QVector<double>> splineXValues;
     bool smooth = settings->value("smoothGraphs", false).toBool();

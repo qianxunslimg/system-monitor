@@ -33,6 +33,8 @@ resourcesWorker::resourcesWorker(QObject *parent, QSettings *settings)
     memoryLabel = parent->findChild<QLabel*>("memoryLabel");
     swapBar = parent->findChild<QProgressBar*>("swapBar");
     swapLabel = parent->findChild<QLabel*>("swapLabel");
+    memoryColourButton = parent->findChild<QPushButton*>("memoryColourButton");
+    swapColourButton = parent->findChild<QPushButton*>("swapColourButton");
 
     networkRecievingLabel = parent->findChild<QLabel*>("networkRecievingLabel");
     networkRecievingTotalLabel = parent->findChild<QLabel*>("networkTotalRecievedLabel");
@@ -41,10 +43,12 @@ resourcesWorker::resourcesWorker(QObject *parent, QSettings *settings)
     networkSendingTotalLabel = parent->findChild<QLabel*>("networkTotalSentLabel");
     networkSendingColourButton = parent->findChild<QPushButton*>("networkSendingColourButton");
 
-    connect(this,SIGNAL(updateMemoryBar(int)),memoryBar,SLOT(setValue(int)));
+    //    connect(this,SIGNAL(updateMemoryBar(int)),memoryBar,SLOT(setValue(int)));
     connect(this,SIGNAL(updateMemoryText(QString)),memoryLabel,SLOT(setText(QString)));
-    connect(this,SIGNAL(updateSwapBar(int)),swapBar,SLOT(setValue(int)));
+    //    connect(this,SIGNAL(updateSwapBar(int)),swapBar,SLOT(setValue(int)));
     connect(this,SIGNAL(updateSwapText(QString)),swapLabel,SLOT(setText(QString)));
+    connect(memoryColourButton, SIGNAL(clicked(bool)), this, SLOT(createColourDialogue()), Qt::UniqueConnection);
+    connect(swapColourButton, SIGNAL(clicked(bool)), this, SLOT(createColourDialogue()), Qt::UniqueConnection);
 
     connect(this,SIGNAL(updateNetworkRecieving(QString)),networkRecievingLabel,SLOT(setText(QString)));
     connect(this,SIGNAL(updateNetworkRecievingTotal(QString)),networkRecievingTotalLabel,SLOT(setText(QString)));
@@ -53,7 +57,6 @@ resourcesWorker::resourcesWorker(QObject *parent, QSettings *settings)
     connect(this,SIGNAL(updateNetworkSendingTotal(QString)),networkSendingTotalLabel,SLOT(setText(QString)));
     connect(networkSendingColourButton, SIGNAL(clicked(bool)), this, SLOT(createColourDialogue()), Qt::UniqueConnection);
 
-    /// TODO: this is horrible
     struct__intArrayHolder defaultRecieving;
     memset(&defaultRecieving, 0, sizeof(struct__intArrayHolder));
     defaultRecieving.array[2] = 255;
@@ -62,6 +65,15 @@ resourcesWorker::resourcesWorker(QObject *parent, QSettings *settings)
     defaultSending.array[0] = 255;
     defaultColours[networkRecievingColourButton->objectName()] = defaultRecieving;
     defaultColours[networkSendingColourButton->objectName()] = defaultSending;
+
+    struct__intArrayHolder defaultMemory;
+    memset(&defaultMemory, 0, sizeof(struct__intArrayHolder));
+    defaultMemory.array[2] = 255;
+    struct__intArrayHolder defaultSwap;
+    memset(&defaultSwap, 0, sizeof(struct__intArrayHolder));
+    defaultSwap.array[0] = 255;
+    defaultColours[memoryColourButton->objectName()] = defaultMemory;
+    defaultColours[swapColourButton->objectName()] = defaultSwap;
 
     this->settings = settings;
 }
@@ -136,6 +148,12 @@ void resourcesWorker::createColourDialogue()
  */
 void resourcesWorker::updateMemory()
 {
+    if (memoryPlotData.size() == 60) {
+        memoryPlotData.pop_front();
+    }
+
+    std::vector<double> memo_swap_data;
+
     memoryConverter mainUsed;
     // GSM includes cached/buffered memory in the used memory but excludes shared memory
     if (settings->value("cachedMemoryIsUsed", false).toBool()) {
@@ -149,22 +167,19 @@ void resourcesWorker::updateMemory()
     memoryConverter mainUsedCopy = mainUsed;
     mainUsedCopy.convertTo(mainTotal.getUnit());
     double memory = (mainUsedCopy.getValue() / mainTotal.getValue()) * 100;
+    memo_swap_data.push_back(memory);
     emit(updateMemoryBar(memory));
     std::string memPercent = memoryConverter::dbl2str(memoryConverter::truncateDouble(memoryConverter::roundDouble(memory, 1),1));
 
     std::string memoryText = mainUsed.to_string() + " (" + memPercent + "%) of " + mainTotal.to_string();
     emit(updateMemoryText(QString::fromStdString(memoryText)));
-}
 
-/**
- * @brief resourcesWorker::updateSwap Calculate used swap and emit the appropriate signals
- * If there is no swap, display 0
- */
-void resourcesWorker::updateSwap()
-{
+
+    //swap
     if (kb_swap_total > 0.0) {
         // swap is active
         double swap = ((double)kb_swap_used / kb_swap_total) * 100;
+        memo_swap_data.push_back(swap);
         emit(updateSwapBar(swap));
 
         memoryConverter swapUsed = memoryConverter(kb_swap_used,memoryUnit::kb,standard);
@@ -177,9 +192,58 @@ void resourcesWorker::updateSwap()
         emit(updateSwapText(QString::fromStdString(swapText)));
     } else {
         // there is no swap
+        memo_swap_data.push_back(0);
         emit(updateSwapBar(0));
         emit(updateSwapText("Not Available"));
     }
+
+    if (memoryPlotData.size() == 60) {
+        memoryPlotData.pop_front();
+    }
+
+    memoryPlotData.push_back(memo_swap_data);
+
+
+    QVector<QVector<double>> plottingData = QVector<QVector<double>>();
+
+    // The data is arranged in vectors but each vector has points that are intended
+    // for multiple plots on multi core machines.
+    // Seperate out the data by reading the number of doubles in the initial vector
+    if (memoryPlotData.size() == 0) {
+        return; // obviously we cant read the initial vector if it is blank
+    }
+
+    for(unsigned int i=0; i<memoryPlotData.at(0).size(); i++) {
+        QVector<double> headingVector;
+        headingVector.push_back(memoryPlotData.at(0).at(i));
+        plottingData.push_back(headingVector);
+    }
+
+    // now that the initial qvectors are filled, we can append the rest of the data
+    for(unsigned int i=1; i<memoryPlotData.size(); i++) {
+        for(unsigned int j=0; j<memoryPlotData.at(i).size(); j++) {
+            plottingData[j].push_back(memoryPlotData.at(i).at(j));
+        }
+    }
+
+    // there might not be enough data in each array so pad with 0s on the front if so
+    for(int i=0; i<plottingData.size(); i++) {
+        for(unsigned int j=60 - plottingData.at(i).size(); j>0; j--) {
+            plottingData[i].push_front((double)0);
+        }
+    }
+
+    emit(updateMemoryPlotSIG(plottingData));
+
+    QPixmap recievingColour = QPixmap(memoryColourButton->width(), memoryColourButton->height());
+    recievingColour.fill(createColourFromSettings(settings, memoryColourButton->objectName(),
+                                                  defaultColours[memoryColourButton->objectName()].array));
+    memoryColourButton->setIcon(QIcon(recievingColour));
+
+    QPixmap sendingColour = QPixmap(swapColourButton->width(), swapColourButton->height());
+    sendingColour.fill(createColourFromSettings(settings, swapColourButton->objectName(),
+                                                defaultColours[swapColourButton->objectName()].array));
+    swapColourButton->setIcon(QIcon(sendingColour));
 }
 
 /**
@@ -297,7 +361,7 @@ void resourcesWorker::loop()
 
     updateCpu();
     updateMemory();
-    updateSwap();
+    //updateSwap();
     updateNetwork();
 
     // only wait for enough time to fill the interval as some time has been used for calculations
